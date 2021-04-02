@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Packer cache file
+test-environment/packer_cache/
+test-environment/output-virtualbox-iso/

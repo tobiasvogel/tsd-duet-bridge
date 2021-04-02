@@ -1,0 +1,52 @@
+{
+  "variables": {
+      "vm_name": "tsd-duet-bridge-dev (octoprint, debian 32-bit)",
+      "numvcpus": "1",
+      "memsize": "1024",
+      "vramsize": "16",
+      "octoprint_port": "8000",
+      "disk_size": "6144"
+    },
+  "builders": [
+    {
+      "type": "virtualbox-iso",
+      "disk_size": "{{ user `disk_size` }}",
+      "hard_drive_interface": "sata",
+      "iso_interface": "sata",
+      "guest_os_type": "Debian",
+      "keep_registered": true,
+      "skip_export": true,
+      "iso_url": "https://cdimage.debian.org/debian-cd/current/i386/iso-cd/debian-10.9.0-i386-netinst.iso",
+      "iso_checksum": "md5:26f9266ca488734c76a33bc2a2dff60e",
+      "ssh_username": "octoprint",
+      "ssh_password": "octoprint",
+      "ssh_wait_timeout": "10000s",
+      "vm_name": "{{ user `vm_name` }}",
+      "vboxmanage": [
+          ["modifyvm", "{{.Name}}", "--memory", "{{ user `memsize` }}"],
+          ["modifyvm", "{{.Name}}", "--cpus", "{{ user `numvcpus` }}"],
+          ["modifyvm", "{{.Name}}", "--vram", "{{ user `vramsize` }}"],
+          ["modifyvm", "{{.Name}}", "--graphicscontroller", "vmsvga"],
+          ["modifyvm", "{{.Name}}", "--natpf1", "octoprint haproxy,tcp,127.0.0.1,{{ user `octoprint_port` }},,80"]
+        ],
+      "sound": "none",
+      "http_directory": "./preseed",
+      "boot_wait": "10s",
+          "boot_command": [
+            "<esc><wait>",
+            "auto ",
+            "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed_octoprint.cfg<wait>",
+            "<enter>"
+          ],
+      "shutdown_command": "echo 'octoprint' | sudo -S shutdown -P now",
+      "post_shutdown_delay": "60s"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "execute_command": "echo 'octoprint'|{{.Vars}} sudo -S -E bash '{{.Path}}'",
+      "scripts": ["scripts/install-octoprint.bash"]
+    }
+  ]
+}
