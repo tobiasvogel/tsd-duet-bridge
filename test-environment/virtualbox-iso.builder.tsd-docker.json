@@ -15,7 +15,8 @@
       "memsize": "1024",
       "vramsize": "16",
       "octoprint_port": "8000",
-      "disk_size": "6144"
+      "disk_size": "6144",
+      "output_directory_name": "./virtualbox-tsd-duet-bridge-dev-tsd-docker"
     },
   "builders": [
     {
@@ -32,6 +33,7 @@
       "ssh_password": "{{ user `root_password` }}",
       "ssh_wait_timeout": "10000s",
       "vm_name": "{{ user `vm_name` }}",
+      "output_directory": "{{ user `output_directory_name` }}",
       "vboxmanage": [
           ["modifyvm", "{{.Name}}", "--memory", "{{ user `memsize` }}"],
           ["modifyvm", "{{.Name}}", "--cpus", "{{ user `numvcpus` }}"],
@@ -87,6 +89,18 @@
       "pause_before": "30s",
       "execute_command": "{{.Vars}} sh '{{.Path}}'",
       "scripts": ["scripts/install-tsd-docker.sh"]
+    },
+    {
+      "type": "shell",
+      "execute_command": "{{.Vars}} sh '{{.Path}}'",
+      "inline": ["reboot"],
+      "expect_disconnect": true
+    },
+    {
+      "type": "shell",
+      "pause_before": "30s",
+      "execute_command": "{{.Vars}} sh '{{.Path}}'",
+      "scripts": ["scripts/install-tsd-containers.sh"]
     }
   ]
 }

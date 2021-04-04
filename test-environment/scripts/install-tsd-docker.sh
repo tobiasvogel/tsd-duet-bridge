@@ -25,28 +25,11 @@ apk add docker
 
 apk add docker-compose
 
-service docker start
-
-# create directory and download tsd-sources
-mkdir src
-
-cd src
-
-wget https://github.com/TheSpaghettiDetective/TheSpaghettiDetective/archive/refs/heads/master.zip
-
-mv master.zip TheSpaghettiDetective.zip
-
-unzip TheSpaghettiDetective.zip
-
-mv TheSpaghettiDetective-master TheSpaghettiDetective
-
-cd TheSpaghettiDetective
-
-
-# install the tsd-server
-docker-compose up -d
-
 
 # enable services upon boot
 rc-update add virtualbox-guest-additions default
 rc-update add docker default
+
+
+# reboot
+reboot

@@ -5,7 +5,8 @@
       "memsize": "1024",
       "vramsize": "16",
       "octoprint_port": "8000",
-      "disk_size": "6144"
+      "disk_size": "4096",
+      "output_directory_name": "./virtualbox-tsd-duet-bridge-dev-tsd-octoprint"
     },
   "builders": [
     {
@@ -22,6 +23,7 @@
       "ssh_password": "octoprint",
       "ssh_wait_timeout": "10000s",
       "vm_name": "{{ user `vm_name` }}",
+      "output_directory": "{{ user `output_directory_name` }}",
       "vboxmanage": [
           ["modifyvm", "{{.Name}}", "--memory", "{{ user `memsize` }}"],
           ["modifyvm", "{{.Name}}", "--cpus", "{{ user `numvcpus` }}"],

@@ -131,3 +131,5 @@ dmypy.json
 # Packer cache file
 test-environment/packer_cache/
 test-environment/output-virtualbox-iso/
+test-environment/virtualbox-tsd-duet-bridge-dev-tsd-octoprint/
+test-environment/virtualbox-tsd-duet-bridge-dev-tsd-docker/
