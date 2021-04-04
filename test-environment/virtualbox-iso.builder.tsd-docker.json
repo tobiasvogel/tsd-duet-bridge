@@ -1,0 +1,92 @@
+{
+  "variables": {
+      "vm_name": "tsd-duet-bridge-dev (tsd-docker, alpine linux 64-bit)",
+      "hostname": "tsd-duet-bridge-docker",
+      "localdomain": "local",
+      "timezone": "UTC",
+      "keymap": "us",
+      "keymap_variant": "us",
+      "nameserver_ip": "8.8.8.8",
+      "root_password": "devel",
+      "unprivileged_user_username": "docker",
+      "unprivileged_user_password": "docker",
+      "proxy": "none",
+      "numvcpus": "1",
+      "memsize": "1024",
+      "vramsize": "16",
+      "octoprint_port": "8000",
+      "disk_size": "6144"
+    },
+  "builders": [
+    {
+      "type": "virtualbox-iso",
+      "disk_size": "{{ user `disk_size` }}",
+      "hard_drive_interface": "sata",
+      "iso_interface": "sata",
+      "guest_os_type": "Linux26_64",
+      "keep_registered": true,
+      "skip_export": true,
+      "iso_url": "https://dl-cdn.alpinelinux.org/alpine/v3.13/releases/x86_64/alpine-virt-3.13.4-x86_64.iso",
+      "iso_checksum": "sha256:0412f85766e21ef279c0a5adb96d7c5d1c35e82a5d1d424cfb018cb40420951f",
+      "ssh_username": "root",
+      "ssh_password": "{{ user `root_password` }}",
+      "ssh_wait_timeout": "10000s",
+      "vm_name": "{{ user `vm_name` }}",
+      "vboxmanage": [
+          ["modifyvm", "{{.Name}}", "--memory", "{{ user `memsize` }}"],
+          ["modifyvm", "{{.Name}}", "--cpus", "{{ user `numvcpus` }}"],
+          ["modifyvm", "{{.Name}}", "--vram", "{{ user `vramsize` }}"],
+          ["modifyvm", "{{.Name}}", "--graphicscontroller", "vmsvga"],
+          ["modifyvm", "{{.Name}}", "--natpf1", "thespaghettidetective,tcp,127.0.0.1,3334,,3334"]
+        ],
+      "sound": "none",
+      "http_directory": "./preseed",
+      "boot_wait": "20s",
+          "boot_command": [
+            "root<enter>",
+            "<wait>",
+            "<wait>",
+            "<wait>",
+            "<wait>",
+            "apk add openssh && \\<enter><wait>",
+            "sed -i 's/^#\\?PermitRootLogin\\sprohibit-password$/PermitRootLogin yes/' /etc/ssh/sshd_config && \\<enter><wait>",
+            "echo -e \"{{ user `root_password` }}\\n{{ user `root_password` }}\" | passwd && \\<enter><wait>",
+            "ifconfig eth0 up && \\<enter><wait>",
+            "udhcpc eth0 && \\<enter><wait>",
+            "service sshd restart<enter><wait>",
+            "<wait>"
+          ],
+      "shutdown_command": "poweroff",
+      "post_shutdown_delay": "60s"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "environment_vars": ["ALPINE_INSTALL_HOSTNAME={{ user `hostname` }}",
+                         "ALPINE_INSTALL_DOMAIN={{ user `localdomain` }}",
+                         "ALPINE_INSTALL_KEYMAP={{ user `keymap` }}",
+                         "ALPINE_INSTALL_VARIANT={{ user `keymap_variant` }}",
+                         "ALPINE_INSTALL_TIMEZONE={{ user `timezone` }}",
+                         "ALPINE_INSTALL_NAMESERVER={{ user `nameserver_ip` }}",
+                         "ALPINE_INSTALL_ROOT_PASSWORD={{ user `root_password` }}",
+                         "ALPINE_INSTALL_PROXY={{ user `proxy` }}",
+                         "ALPINE_INSTALL_USER={{ user `unprivileged_user_username` }}",
+                         "ALPINE_INSTALL_PASSWORD={{ user `unprivileged_user_password` }}"],
+      "execute_command": "{{.Vars}} sh '{{.Path}}'",
+      "scripts": ["scripts/install-tsd-system.sh"]
+    },
+    {
+      "type": "shell",
+      "execute_command": "{{.Vars}} sh '{{.Path}}'",
+      "inline": ["reboot"],
+      "expect_disconnect": true
+    },
+    {
+      "type": "shell",
+      "pause_before": "30s",
+      "execute_command": "{{.Vars}} sh '{{.Path}}'",
+      "scripts": ["scripts/install-tsd-docker.sh"]
+    }
+  ]
+}

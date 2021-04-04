@@ -17,6 +17,7 @@ chown root:octoprint /var/lib/sudo/lectured/octoprint
 chmod 600 /var/lib/sudo/lectured/octoprint
 echo -e "Defaults\tlecture=\"never\"" >> /etc/sudoers.d/99-suppress-sudo-warning
 chmod 440 /etc/sudoers.d/99-suppress-sudo-warning
+sudo -k
 
 
 # upgrade the system to the latest packages and make sure
@@ -24,7 +25,7 @@ chmod 440 /etc/sudoers.d/99-suppress-sudo-warning
 DEBIAN_FRONTEND=noninteractive apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get -y upgrade
 DEBIAN_FRONTEND=noninteractive apt-get -y dist-upgrade
-DEBIAN_FRONTEND=noninteractive apt-get -y install python3-pip python3-dev python3-setuptools python3-venv git libyaml-dev build-essential linux-headers-686 net-tools
+DEBIAN_FRONTEND=noninteractive apt-get -y install python3-pip python3-dev python3-setuptools python3-venv git libyaml-dev build-essential linux-headers-686 net-tools mlocate
 
 
 # install vbox guest-additions
@@ -90,7 +91,7 @@ DEBIAN_FRONTEND=noninteractive apt-get -y remove --purge wpasupplicant wireless-
 DEBIAN_FRONTEND=noninteractive apt-get -y --purge autoremove
 #sed -i 's/^allow-hotplug \(en.*\)$/auto \1/' /etc/network/interfaces
 #sed -i 's/^allow-hotplug en.*$/auto eth0/' /etc/network/interfaces
-#sed -i 's/^allow-hotplug en.*$/allow-hotplug eth0/' /etc/network/interfaces
+sed -i 's/^allow-hotplug en.\+$/allow-hotplug eth0/' /etc/network/interfaces
 sed -i 's/^iface en.\+ inet dhcp$/iface eth0 inet dhcp/' /etc/network/interfaces
 if [ -z "`grep 'GRUB_CMDLINE_LINUX=' /etc/default/grub | sed 's/GRUB_CMDLINE_LINUX=\"\(.*\)"/\1/'`" ]; then
 	sed -i 's/^GRUB_CMDLINE_LINUX=""$/GRUB_CMDLINE_LINUX="net.ifnames=0 biosdevname=0"/' /etc/default/grub
@@ -106,12 +107,16 @@ echo "" >> /etc/systemd/system/dhclient.service
 echo "[Service]" >> /etc/systemd/system/dhclient.service
 echo "Type=simple" >> /etc/systemd/system/dhclient.service
 echo "ExecStart=/usr/sbin/dhclient eth0" >> /etc/systemd/system/dhclient.service
+echo "After=network-online.target" >> /etc/systemd/system/dhclient.service
+echo "Wants=network-online.target" >> /etc/systemd/system/dhclient.service
 echo "" >> /etc/systemd/system/dhclient.service
 echo "[Install]" >> /etc/systemd/system/dhclient.service
 echo "WantedBy=multi-user.target" >> /etc/systemd/system/dhclient.service
 
 systemctl enable dhclient.service
 
+# creating mlocate-db
+updatedb
 
 # cleanup
 rm -f /etc/sudoers.d/99-suppress-sudo-warning
